@@ -6,8 +6,7 @@ While the game is running, run shotcalc.exe. To avoid crashing, you should wait 
 The terminal will print the controls.
 
 # How it Works
-
-Shots are calculated by using directions and trigonometry. First, the direction between the target ball and pocket is calculated by subtracting the pocket's coordinates from the target ball's coordinates. Next, the ghost ball, or the position the cue ball needs to hit the target ball at is calculated by multiplying the previous direction by the cue ball's radius. Then, the target direction is calculated by subtracting the cue ball's coordinates from the ghost ball's coordinates. Finally, the target angle is calculated using inverse tangent, which is then converted to degrees by multiplying by 180 and dividing by PI.
+To calculate shots, the direction between the target ball and pocket is calculated by subtracting the pocket's coordinates from the target ball's coordinates. Next, the ghost ball, or the position the cue ball needs to hit the target ball at is calculated by multiplying the previous direction by the cue ball's radius. Then, the target direction is calculated by subtracting the cue ball's coordinates from the ghost ball's coordinates. Finally, the target angle is calculated using inverse tangent, which is then converted to degrees by multiplying by 180 and dividing by PI.
 
 Bank shots are calculated by reflecting the pocket's location accross the bank wall. An explanation for can be found here: https://www.billiardsthegame.com/finding-the-bank-angle-317
 
