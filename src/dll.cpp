@@ -5,9 +5,9 @@
 #include <TlHelp32.h>
 #include <math.h>
 
-void UpdateConsole(int* balls, int selected, int pocket, int combinations, bool doBankShot, int selectedBankWall, float targetAngle, float currentAngle)
+void UpdateConsole(int* balls, int selected, int pocket, int combinations, bool doBankShot, bool bankingCue, int selectedBankWall, float targetAngle, float currentAngle)
 {
-	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), { 0, 9 });
+	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), { 0, 12 });
 
 	std::cout << "Target Pocket: " << pocket << "           \n";
 	std::cout << "\n(editing ball " << (selected + 1) << ")                  \n";
@@ -18,15 +18,21 @@ void UpdateConsole(int* balls, int selected, int pocket, int combinations, bool 
 
 	if (doBankShot) 
 	{
-		std::cout << "Selected Bank Wall: " << selectedBankWall << "              \n";
+		std::cout << "\nSelected Bank Wall: " << selectedBankWall << "                         \n";
+
+		if (bankingCue) 
+		{
+			std::cout << "Hitting the cue ball off this wall.                 \n";
+		}
+		else 
+		{
+			std::cout << "Hitting the target ball off this wall.              \n";
+		}
 	}
 
-	std::cout << "                       \nTarget Angle: " << targetAngle << "           \n";
-	std::cout << "Current Angle: " << currentAngle << "           \n";
+	std::cout << "                       \nTarget Angle: " << targetAngle << "                      \n";
+	std::cout << "Current Angle: " << currentAngle << "                   \n";
 
-	std::cout << "                                       \n";
-	std::cout << "                                       \n";
-	std::cout << "                                       \n";
 	std::cout << "                                       \n";
 	std::cout << "                                       \n";
 	std::cout << "                                       \n";
@@ -48,11 +54,11 @@ DWORD WINAPI Thread(LPVOID param)
 	std::cout << ", - Change selected ball to edit if their are multible target balls\n";
 	std::cout << "0 - Toggle between selecting stripes vs solids\n";
 	std::cout << "1-8 - Select balls 1 - 8, or 9 - 15 if 0 is pressed\n";
-	std::cout << "Z-N - Select pocket where 1 is the bottom right (looking at the couches); going clockwise\n\n";
+	std::cout << "Z-N - Select pocket where 1 is the bottom right (looking at the couches); going clockwise\n";
 
 	std::cout << "L - Toggle bank shot\n";
 	std::cout << "K - Toggle bank shot with cue ball\n";
-	std::cout << "WASD - Select bank shot wall\n";
+	std::cout << "WASD - Select bank shot wall (look towards couches)\n\n";
 	
 	uintptr_t moduleBase = (uintptr_t)GetModuleHandle(L"game.dll");
 	
@@ -71,7 +77,7 @@ DWORD WINAPI Thread(LPVOID param)
 	int combinations = 0;
 	int selectedBallIndex = 0; // the ball to change
 
-	bool doBankShot = true;
+	bool doBankShot = false;
 	bool bankCueBall = false;
 	int selectedBankWall = 0;
 
@@ -148,6 +154,10 @@ DWORD WINAPI Thread(LPVOID param)
 			combinations = 0;
 			selectedBallIndex = 0;
 
+			doBankShot = false;
+			bankCueBall = false;
+			selectedBankWall = 0;
+
 			targetAngle = 0;
 			currentAngle = 0;
 		}
@@ -160,18 +170,42 @@ DWORD WINAPI Thread(LPVOID param)
 		float pocketPos[2] = { pockets[pocketNum][0], pockets[pocketNum][1] };
 		if (doBankShot) // https://www.billiardsthegame.com/finding-the-bank-angle-317
 		{
-			switch (selectedBankWall) 
+			// reflect the pocket position
+			if (bankCueBall) 
 			{
-			case 0:
-			case 2:
-				pocketPos[0] *= -4; // 2
-				break;
-			case 1:
-				pocketPos[1] = (pocketPos[1] + 1) * -3; // 1.5
-				break;
-			case 3:
-				pocketPos[1] = (pocketPos[1] - 1) * -3; // 1.5
-				break;
+				switch (selectedBankWall)
+				{
+				case 0:
+					targetBallPos[0] = (targetBallPos[0] + 0.5375) * -2;
+					break;
+				case 2:
+					targetBallPos[0] = (targetBallPos[0] - 0.5375) * -2;
+					break;
+				case 1:
+					targetBallPos[1] = (targetBallPos[1] + 1) * -1.5;
+					break;
+				case 3:
+					targetBallPos[1] = (targetBallPos[1] - 1) * -1.5;
+					break;
+				}
+			}
+			else 
+			{
+				switch (selectedBankWall)
+				{
+				case 0:
+					pocketPos[0] = (pocketPos[0] + 0.5375) * -2;
+					break;
+				case 2:
+					pocketPos[0] = (pocketPos[0] - 0.5375) * -2;
+					break;
+				case 1:
+					pocketPos[1] = (pocketPos[1] + 1) * -1.5;
+					break;
+				case 3:
+					pocketPos[1] = (pocketPos[1] - 1) * -1.5;
+					break;
+				}
 			}
 		}
 
@@ -214,7 +248,7 @@ DWORD WINAPI Thread(LPVOID param)
 
 		currentAngle = atan2(camX, camY) * 180 / 3.14159;
 
-		UpdateConsole(balls, selectedBallIndex, pocketNum + 1, combinations, doBankShot, selectedBankWall, targetAngle, currentAngle);
+		UpdateConsole(balls, selectedBallIndex, pocketNum + 1, combinations, doBankShot, bankCueBall, selectedBankWall, targetAngle, currentAngle);
 	}
 
 	fclose(f);
