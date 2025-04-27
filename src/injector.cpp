@@ -1,5 +1,7 @@
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
 #include <iostream>
-#include <Windows.h>
 #include <TlHelp32.h>
 
 DWORD GetProcId(const wchar_t* procName)
@@ -50,8 +52,8 @@ std::string GetCurrentPath(int exeLen) // exeLen is the amount of characters in 
 
 int main()
 {
-    std::string exeName = "PooliansAimBotInjector.exe";
-    std::string dir = GetCurrentPath(exeName.length()) + "PooliansAimBot.dll";
+    std::string exeName = "shotcalc.exe";
+    std::string dir = GetCurrentPath(exeName.length()) + "shotcalc.dll";
     const char* dllPath = dir.c_str();
 
     DWORD procId = 0;
