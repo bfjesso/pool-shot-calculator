@@ -5,6 +5,13 @@
 #include <TlHelp32.h>
 #include <math.h>
 
+const uintptr_t billiardAppRefOffset = 0x153AEC;
+const uintptr_t ballsListOffset = 0x1EE4;
+const uintptr_t playerCameraOffset = 0x1CC;
+
+const uintptr_t ballPosOffset = 0x3C;
+const uintptr_t cameraPosOffset = 0x120;
+
 void UpdateConsole(int* balls, int selected, int pocket, int combinations, bool doBankShot, bool bankingCue, int selectedBankWall, float targetAngle, float currentAngle)
 {
 	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), { 0, 12 });
@@ -60,15 +67,11 @@ DWORD WINAPI Thread(LPVOID param)
 	std::cout << "K - Toggle bank shot with cue ball\n";
 	std::cout << "WASD - Select bank shot wall (look towards couches)\n\n";
 	
-	uintptr_t moduleBase = (uintptr_t)GetModuleHandle(L"game.dll");
-	
-	uintptr_t baseAddress = moduleBase + 0x153984;
-
-	uintptr_t ballsBaseAddress = *(uintptr_t*)baseAddress + 0x1EB4;
-
-	uintptr_t cueBallPtr = *(uintptr_t*)ballsBaseAddress;
-
-	uintptr_t cueBall = *(uintptr_t*)cueBallPtr;
+	uintptr_t gameDllBase = (uintptr_t)GetModuleHandle(L"game.dll");
+	uintptr_t billiardApp = *(uintptr_t*)(gameDllBase + billiardAppRefOffset);
+	uintptr_t ballsList = *(uintptr_t*)(billiardApp + ballsListOffset);
+	uintptr_t cueBall = *(uintptr_t*)ballsList;
+	uintptr_t playerCamera = *(uintptr_t*)(billiardApp + playerCameraOffset);
 
 	int solidsOrStripes = 0;
 	int balls[4] = { 1, 1, 1, 1 }; // balls involved in the combination shot
@@ -142,11 +145,10 @@ DWORD WINAPI Thread(LPVOID param)
 
 		if (GetAsyncKeyState(0x52) & 1) // R
 		{
-			ballsBaseAddress = *(uintptr_t*)baseAddress + 0x1EB4;
-
-			cueBallPtr = *(uintptr_t*)ballsBaseAddress;
-
-			cueBall = *(uintptr_t*)cueBallPtr;
+			billiardApp = *(uintptr_t*)(gameDllBase + billiardAppRefOffset);
+			ballsList = *(uintptr_t*)(billiardApp + ballsListOffset);
+			cueBall = *(uintptr_t*)ballsList;
+			playerCamera = *(uintptr_t*)(billiardApp + playerCameraOffset);
 
 			solidsOrStripes = 0;
 			balls[0] = 1;
@@ -162,10 +164,10 @@ DWORD WINAPI Thread(LPVOID param)
 			currentAngle = 0;
 		}
 		
-		uintptr_t targetBallPtr = cueBallPtr + (0x4 * balls[0]);
+		uintptr_t targetBallPtr = ballsList + (0x4 * balls[0]);
 		uintptr_t targetBall = *(uintptr_t*)targetBallPtr;
 
-		float targetBallPos[2] = { *(float*)(targetBall + 0x3C), *(float*)(targetBall + 0x44) };
+		float targetBallPos[2] = { *(float*)(targetBall + ballPosOffset), *(float*)(targetBall + ballPosOffset + 0x8) };
 
 		float pocketPos[2] = { pockets[pocketNum][0], pockets[pocketNum][1] };
 		if (doBankShot) // https://www.billiardsthegame.com/finding-the-bank-angle-317
@@ -218,7 +220,7 @@ DWORD WINAPI Thread(LPVOID param)
 
 		for (int i = 1; i <= combinations; i++) 
 		{
-			targetBallPtr = cueBallPtr + (0x4 * balls[i]);
+			targetBallPtr = ballsList + (0x4 * balls[i]);
 			targetBall = *(uintptr_t*)targetBallPtr;
 
 			targetBallPos[0] = *(float*)(targetBall + 0x3C);
@@ -243,8 +245,8 @@ DWORD WINAPI Thread(LPVOID param)
 
 		targetAngle = atan2(targetDirection[0], targetDirection[1]) * 180 / 3.14159;
 
-		float camX = *(float*)(*(uintptr_t*)(*(uintptr_t*)baseAddress + 0x1CC) + 0x120);
-		float camY = *(float*)(*(uintptr_t*)(*(uintptr_t*)baseAddress + 0x1CC) + 0x128);
+		float camX = *(float*)(playerCamera + cameraPosOffset);
+		float camY = *(float*)(playerCamera + cameraPosOffset + 0x8);
 
 		currentAngle = atan2(camX, camY) * 180 / 3.14159;
 
