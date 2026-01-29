@@ -2,8 +2,6 @@
 #include <windows.h>
 
 #include <iostream>
-#include <TlHelp32.h>
-#include <math.h>
 
 const uintptr_t billiardAppRefOffset = 0x154B0C;
 const uintptr_t ballsListOffset = 0x22B8; // 8B 8E ?? ?? ?? ?? 8B 0C B9 E8 ?? ?? ?? ?? 8B 96 ?? ?? ?? ?? 89 55 E8; esi should contain the CBilliardApp
